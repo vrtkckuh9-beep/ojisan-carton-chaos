@@ -1,7 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { OjisanFace } from "@/components/OjisanFace";
 import { FaceBorder } from "@/components/FaceBorder";
 import { WoodButton } from "@/components/WoodButton";
+import { SkinFace } from "@/components/SkinFace";
+import {
+  findSkin,
+  getAngryLibrary,
+  getNormalLibrary,
+  getSelectedAngryId,
+  getSelectedNormalId,
+} from "@/lib/skins";
 
 type Screen = "title" | "game" | "result" | "gallery";
 type Mode = "easy" | "hard";
@@ -33,6 +42,7 @@ const CHARACTERS = [
 const cols = (n: NumOpt) => Math.sqrt(n);
 
 const Index = () => {
+  const navigate = useNavigate();
   const [screen, setScreen] = useState<Screen>("title");
   const [num, setNum] = useState<NumOpt>(16);
   const [mode, setMode] = useState<Mode>("easy");
@@ -43,6 +53,9 @@ const Index = () => {
   const [revealed, setRevealed] = useState(false);
   const [scolded, setScolded] = useState<number>(() => Number(localStorage.getItem("scolded") || 0));
   const [lidOpening, setLidOpening] = useState(false);
+
+  const normalSkin = findSkin(getNormalLibrary(), getSelectedNormalId());
+  const angrySkin = findSkin(getAngryLibrary(), getSelectedAngryId());
 
   const startGame = () => {
     setAngryIndex(Math.floor(Math.random() * num));
@@ -97,8 +110,8 @@ const Index = () => {
                   OJISAN
                 </div>
               </div>
-              <div className="w-20 h-20 bg-white rounded-full ink-outline flex items-center justify-center shrink-0">
-                <OjisanFace variant="angry" className="w-[88%] h-[88%]" style={{ filter: "grayscale(1)" }} />
+              <div className="w-20 h-20 bg-white rounded-full ink-outline flex items-center justify-center shrink-0 overflow-hidden">
+                <SkinFace src={angrySkin.dataUrl} className="w-[95%] h-[95%]" />
               </div>
             </div>
             <div className="h-1 bg-[hsl(var(--ink))]" />
@@ -142,16 +155,27 @@ const Index = () => {
           <div className="w-full flex items-center gap-3 mt-1">
             <div className="flex-1 flex flex-col gap-3">
               <WoodButton onClick={startGame}>START</WoodButton>
+              <WoodButton onClick={() => navigate("/skins")}>SKIN</WoodButton>
               <WoodButton onClick={() => setScreen("gallery")}>SETTING</WoodButton>
             </div>
-            <button
-              aria-label="help"
-              onClick={() => alert("Tap faces to find the Angry Uncle hiding among them!")}
-              className="w-12 h-12 rounded-full ink-outline flex items-center justify-center text-white font-black text-2xl bg-transparent btn-press"
-              style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}
-            >
-              ?
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                aria-label="help"
+                onClick={() => alert("Tap faces to find the Angry Uncle hiding among them!")}
+                className="w-12 h-12 rounded-full ink-outline flex items-center justify-center text-white font-black text-2xl bg-transparent btn-press"
+                style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}
+              >
+                ?
+              </button>
+              <button
+                aria-label="admin"
+                onClick={() => navigate("/admin")}
+                className="w-12 h-12 rounded-full ink-outline flex items-center justify-center text-white font-black text-sm bg-[hsl(var(--ink))] btn-press"
+                style={{ boxShadow: "0 4px 0 hsl(var(--wood-dark))" }}
+              >
+                ⚙
+              </button>
+            </div>
           </div>
         </div>
         <FaceBorder rows={2} />
@@ -210,11 +234,7 @@ const Index = () => {
                             className={`w-[110%] h-[110%] btn-press ${scatter ? "animate-scatter" : ""} ${showAngry ? "animate-angry-erupt" : ""}`}
                             style={scatter ? ({ ["--tx" as any]: tx, ["--ty" as any]: ty, ["--tr" as any]: tr } as React.CSSProperties) : undefined}
                           >
-                            <OjisanFace
-                              variant={showAngry ? "angry" : "normal"}
-                              triple={mode === "hard" && !showAngry && (i % 3 === 1)}
-                              className="w-full h-full"
-                            />
+                            <SkinFace src={showAngry ? angrySkin.dataUrl : normalSkin.dataUrl} className="w-full h-full" />
                           </button>
                         )}
                       </div>
@@ -246,8 +266,8 @@ const Index = () => {
         <div className="bg-[hsl(var(--yellow))] ink-outline rounded-xl px-6 py-3 font-black text-2xl text-[hsl(var(--ink))] text-shadow-hard animate-pop-in" style={{ boxShadow: "0 5px 0 hsl(var(--ink))" }}>
           Angry Uncle Appears!
         </div>
-        <div className="w-72 h-72 ink-outline rounded-2xl bg-[hsl(var(--cream))] flex items-center justify-center animate-shake" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
-          <OjisanFace variant="angry" className="w-[95%] h-[95%] animate-angry-erupt" />
+        <div className="w-72 h-72 ink-outline rounded-2xl bg-[hsl(var(--cream))] flex items-center justify-center animate-shake overflow-hidden" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
+          <SkinFace src={angrySkin.dataUrl} className="w-[95%] h-[95%] animate-angry-erupt" />
         </div>
         <div className="text-[hsl(var(--cream))] font-black text-lg">Scolded: {scolded}</div>
         <div className="w-full max-w-xs flex flex-col gap-3">
