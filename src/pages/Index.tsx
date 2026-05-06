@@ -1,7 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { OjisanFace } from "@/components/OjisanFace";
 import { FaceBorder } from "@/components/FaceBorder";
 import { WoodButton } from "@/components/WoodButton";
+import { SkinFace } from "@/components/SkinFace";
+import {
+  findSkin,
+  getAngryLibrary,
+  getNormalLibrary,
+  getSelectedAngryId,
+  getSelectedNormalId,
+} from "@/lib/skins";
 
 type Screen = "title" | "game" | "result" | "gallery";
 type Mode = "easy" | "hard";
@@ -33,6 +42,7 @@ const CHARACTERS = [
 const cols = (n: NumOpt) => Math.sqrt(n);
 
 const Index = () => {
+  const navigate = useNavigate();
   const [screen, setScreen] = useState<Screen>("title");
   const [num, setNum] = useState<NumOpt>(16);
   const [mode, setMode] = useState<Mode>("easy");
@@ -43,6 +53,9 @@ const Index = () => {
   const [revealed, setRevealed] = useState(false);
   const [scolded, setScolded] = useState<number>(() => Number(localStorage.getItem("scolded") || 0));
   const [lidOpening, setLidOpening] = useState(false);
+
+  const normalSkin = findSkin(getNormalLibrary(), getSelectedNormalId());
+  const angrySkin = findSkin(getAngryLibrary(), getSelectedAngryId());
 
   const startGame = () => {
     setAngryIndex(Math.floor(Math.random() * num));
