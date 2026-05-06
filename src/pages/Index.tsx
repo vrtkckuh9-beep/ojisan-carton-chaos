@@ -234,11 +234,7 @@ const Index = () => {
                             className={`w-[110%] h-[110%] btn-press ${scatter ? "animate-scatter" : ""} ${showAngry ? "animate-angry-erupt" : ""}`}
                             style={scatter ? ({ ["--tx" as any]: tx, ["--ty" as any]: ty, ["--tr" as any]: tr } as React.CSSProperties) : undefined}
                           >
-                            <OjisanFace
-                              variant={showAngry ? "angry" : "normal"}
-                              triple={mode === "hard" && !showAngry && (i % 3 === 1)}
-                              className="w-full h-full"
-                            />
+                            <SkinFace src={showAngry ? angrySkin.dataUrl : normalSkin.dataUrl} className="w-full h-full" />
                           </button>
                         )}
                       </div>
@@ -270,8 +266,8 @@ const Index = () => {
         <div className="bg-[hsl(var(--yellow))] ink-outline rounded-xl px-6 py-3 font-black text-2xl text-[hsl(var(--ink))] text-shadow-hard animate-pop-in" style={{ boxShadow: "0 5px 0 hsl(var(--ink))" }}>
           Angry Uncle Appears!
         </div>
-        <div className="w-72 h-72 ink-outline rounded-2xl bg-[hsl(var(--cream))] flex items-center justify-center animate-shake" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
-          <OjisanFace variant="angry" className="w-[95%] h-[95%] animate-angry-erupt" />
+        <div className="w-72 h-72 ink-outline rounded-2xl bg-[hsl(var(--cream))] flex items-center justify-center animate-shake overflow-hidden" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
+          <SkinFace src={angrySkin.dataUrl} className="w-[95%] h-[95%] animate-angry-erupt" />
         </div>
         <div className="text-[hsl(var(--cream))] font-black text-lg">Scolded: {scolded}</div>
         <div className="w-full max-w-xs flex flex-col gap-3">
