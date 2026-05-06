@@ -110,8 +110,8 @@ const Index = () => {
                   OJISAN
                 </div>
               </div>
-              <div className="w-20 h-20 bg-white rounded-full ink-outline flex items-center justify-center shrink-0">
-                <OjisanFace variant="angry" className="w-[88%] h-[88%]" style={{ filter: "grayscale(1)" }} />
+              <div className="w-20 h-20 bg-white rounded-full ink-outline flex items-center justify-center shrink-0 overflow-hidden">
+                <SkinFace src={angrySkin.dataUrl} className="w-[95%] h-[95%]" />
               </div>
             </div>
             <div className="h-1 bg-[hsl(var(--ink))]" />
@@ -155,16 +155,27 @@ const Index = () => {
           <div className="w-full flex items-center gap-3 mt-1">
             <div className="flex-1 flex flex-col gap-3">
               <WoodButton onClick={startGame}>START</WoodButton>
+              <WoodButton onClick={() => navigate("/skins")}>SKIN</WoodButton>
               <WoodButton onClick={() => setScreen("gallery")}>SETTING</WoodButton>
             </div>
-            <button
-              aria-label="help"
-              onClick={() => alert("Tap faces to find the Angry Uncle hiding among them!")}
-              className="w-12 h-12 rounded-full ink-outline flex items-center justify-center text-white font-black text-2xl bg-transparent btn-press"
-              style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}
-            >
-              ?
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                aria-label="help"
+                onClick={() => alert("Tap faces to find the Angry Uncle hiding among them!")}
+                className="w-12 h-12 rounded-full ink-outline flex items-center justify-center text-white font-black text-2xl bg-transparent btn-press"
+                style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}
+              >
+                ?
+              </button>
+              <button
+                aria-label="admin"
+                onClick={() => navigate("/admin")}
+                className="w-12 h-12 rounded-full ink-outline flex items-center justify-center text-white font-black text-sm bg-[hsl(var(--ink))] btn-press"
+                style={{ boxShadow: "0 4px 0 hsl(var(--wood-dark))" }}
+              >
+                ⚙
+              </button>
+            </div>
           </div>
         </div>
         <FaceBorder rows={2} />
