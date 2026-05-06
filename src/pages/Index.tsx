@@ -83,12 +83,11 @@ const Index = () => {
         <FaceBorder rows={2} />
         <div className="flex-1 w-full max-w-md mx-auto px-5 py-4 flex flex-col items-center justify-center gap-4">
           {/* Carton package */}
-          <div className="w-full ink-outline rounded-xl bg-[hsl(var(--cream))] overflow-hidden" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
+          <button onClick={startGame} className="w-full ink-outline rounded-xl bg-[hsl(var(--cream))] overflow-hidden btn-press text-left" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
             <div className="h-3 bg-[hsl(var(--cream))]" />
             <div className="h-1 bg-[hsl(var(--ink))]" />
             <div className="h-2 bg-white" />
             <div className="h-1 bg-[hsl(var(--ink))]" />
-            {/* Maroon body with logo */}
             <div className="bg-[hsl(var(--maroon))] px-4 py-5 flex items-center gap-3 relative">
               <div className="flex-1">
                 <div className="font-black leading-none text-[hsl(var(--orange))] text-stroke-white text-shadow-hard tracking-tight" style={{ fontSize: "2.6rem", lineHeight: 0.9 }}>
@@ -106,7 +105,7 @@ const Index = () => {
             <div className="h-2 bg-white" />
             <div className="h-1 bg-[hsl(var(--ink))]" />
             <div className="h-3 bg-[hsl(var(--cream))]" />
-          </div>
+          </button>
 
           {/* Num selector */}
           <div className="w-full bg-[hsl(var(--ink))] ink-outline rounded-full p-1 flex items-center gap-1">
