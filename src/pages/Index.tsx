@@ -10,6 +10,7 @@ import {
   getSelectedPack,
   setSkinMode,
 } from "@/lib/skins";
+import { playRandomSound } from "@/lib/audio";
 
 type Screen = "title" | "game" | "gallery";
 
@@ -77,6 +78,8 @@ const Index = () => {
   const tapFace = (i: number) => {
     if (removed.has(i) || revealed || faceAnimations[i]) return;
     if (i === angryIndex) {
+      const angryPack = getAngryPack();
+      playRandomSound(angryPack.angrySounds || []);
       setRevealed(true);
       setShaking(true);
       const s = scolded + 1;
@@ -85,6 +88,8 @@ const Index = () => {
       setTimeout(() => setShaking(false), 600);
       setTimeout(() => setShowEndButtons(true), 1000);
     } else {
+      const facePack = getFacePack(i);
+      playRandomSound(facePack.normalSounds || []);
       setFaceAnimations((prev) => ({ ...prev, [i]: "flip-spin-fly" }));
       setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
       setTimeout(() => {

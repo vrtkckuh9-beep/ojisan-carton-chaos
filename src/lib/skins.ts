@@ -6,6 +6,8 @@ export type SkinPack = {
   name: string;
   normalDataUrl: string;
   angryDataUrl: string;
+  normalSounds?: string[];
+  angrySounds?: string[];
   builtin?: boolean;
 };
 
@@ -25,6 +27,8 @@ export const BUILTIN_PACK: SkinPack = {
   name: "Default",
   normalDataUrl: normalDefault,
   angryDataUrl: angryDefault,
+  normalSounds: [],
+  angrySounds: [],
   builtin: true,
 };
 
@@ -44,6 +48,15 @@ const writePacks = (packs: SkinPack[]) => {
 export const getSkinPacks = (): SkinPack[] => [BUILTIN_PACK, ...readPacks()];
 
 export const addSkinPack = (pack: SkinPack) => writePacks([...readPacks(), pack]);
+
+export const updateSkinPack = (updated: SkinPack) => {
+  const packs = readPacks();
+  const idx = packs.findIndex((p) => p.id === updated.id);
+  if (idx >= 0) {
+    packs[idx] = updated;
+    writePacks(packs);
+  }
+};
 
 export const removeSkinPack = (id: string): boolean => {
   const all = getSkinPacks();

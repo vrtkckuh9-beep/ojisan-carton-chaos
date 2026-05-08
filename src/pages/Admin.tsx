@@ -11,8 +11,67 @@ import {
   removeSkinPack,
   setAdmin,
   setSelectedPackId,
+  updateSkinPack,
 } from "@/lib/skins";
 import { WoodButton } from "@/components/WoodButton";
+
+const SoundList = ({
+  label,
+  sounds,
+  onAdd,
+  onRemove,
+}: {
+  label: string;
+  sounds: string[];
+  onAdd: (url: string) => void;
+  onRemove: (idx: number) => void;
+}) => {
+  const [url, setUrl] = useState("");
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="text-xs font-black text-[hsl(var(--ink))]">{label}</div>
+      {sounds.map((s, i) => (
+        <div key={i} className="flex items-center gap-1">
+          <div className="flex-1 text-[10px] font-bold text-[hsl(var(--ink))] truncate bg-white ink-outline-2 rounded px-2 py-1">
+            {s}
+          </div>
+          <button
+            onClick={() => onRemove(i)}
+            className="text-[10px] font-black px-2 py-1 rounded ink-outline-2 bg-[hsl(var(--angry))] text-white shrink-0"
+          >
+            X
+          </button>
+        </div>
+      ))}
+      <div className="flex gap-1">
+        <input
+          type="text"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Audio URL..."
+          className="flex-1 ink-outline-2 rounded px-2 py-1 text-[11px] font-bold text-[hsl(var(--ink))] bg-white"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && url.trim()) {
+              onAdd(url.trim());
+              setUrl("");
+            }
+          }}
+        />
+        <button
+          onClick={() => {
+            if (url.trim()) {
+              onAdd(url.trim());
+              setUrl("");
+            }
+          }}
+          className="text-[10px] font-black px-2 py-1 rounded ink-outline-2 bg-[hsl(var(--yellow))] text-[hsl(var(--ink))] shrink-0"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -25,6 +84,7 @@ const Admin = () => {
   const [normalPreview, setNormalPreview] = useState<string | null>(null);
   const [angryPreview, setAngryPreview] = useState<string | null>(null);
   const [packName, setPackName] = useState("");
+  const [expandedPack, setExpandedPack] = useState<string | null>(null);
 
   if (!authed) {
     return (
@@ -52,7 +112,7 @@ const Admin = () => {
             ENTER
           </WoodButton>
           <button onClick={() => navigate("/")} className="text-xs underline text-[hsl(var(--ink))]">
-            ← Back to game
+            Back to game
           </button>
         </div>
       </div>
@@ -88,6 +148,8 @@ const Admin = () => {
       name,
       normalDataUrl: normalPreview,
       angryDataUrl: angryPreview,
+      normalSounds: [],
+      angrySounds: [],
     };
     addSkinPack(pack);
     setNormalPreview(null);
@@ -109,11 +171,25 @@ const Admin = () => {
     refresh();
   };
 
+  const addSound = (pack: SkinPack, type: "normalSounds" | "angrySounds", url: string) => {
+    const updated = { ...pack };
+    updated[type] = [...(updated[type] || []), url];
+    updateSkinPack(updated);
+    refresh();
+  };
+
+  const removeSound = (pack: SkinPack, type: "normalSounds" | "angrySounds", idx: number) => {
+    const updated = { ...pack };
+    updated[type] = (updated[type] || []).filter((_, i) => i !== idx);
+    updateSkinPack(updated);
+    refresh();
+  };
+
   return (
     <div className="wood-bg min-h-screen overflow-y-auto">
       <div className="max-w-2xl mx-auto p-4 flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate("/")} className="px-4 py-2 ink-outline rounded-full bg-[hsl(var(--cream))] font-black text-[hsl(var(--ink))] btn-press" style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}>← BACK</button>
+          <button onClick={() => navigate("/")} className="px-4 py-2 ink-outline rounded-full bg-[hsl(var(--cream))] font-black text-[hsl(var(--ink))] btn-press" style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}>BACK</button>
           <div className="font-black text-[hsl(var(--cream))] text-xl">ADMIN</div>
           <button onClick={() => { setAdmin(false); setAuthed(false); }} className="px-3 py-2 ink-outline rounded-full bg-[hsl(var(--ink))] text-white font-black text-sm btn-press">LOGOUT</button>
         </div>
@@ -164,41 +240,68 @@ const Admin = () => {
         {/* Existing packs */}
         <div className="bg-[hsl(var(--cream))] ink-outline rounded-2xl p-4" style={{ boxShadow: "0 5px 0 hsl(var(--ink))" }}>
           <div className="font-black text-[hsl(var(--ink))] text-lg mb-3">SKIN PACKS</div>
-          <div className="grid grid-cols-2 gap-3">
-            {packs.map((pack) => (
-              <div key={pack.id} className="flex flex-col gap-1">
-                <div className="grid grid-cols-2 gap-1">
-                  <div className="aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center bg-white">
-                    <img src={pack.normalDataUrl} alt={`${pack.name} normal`} className="w-full h-full object-contain" />
+          <div className="flex flex-col gap-3">
+            {packs.map((pack) => {
+              const isExpanded = expandedPack === pack.id;
+              return (
+                <div key={pack.id} className="ink-outline-2 rounded-xl bg-white overflow-hidden">
+                  <div className="p-3">
+                    <div className="grid grid-cols-2 gap-1 mb-2">
+                      <div className="aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center bg-white">
+                        <img src={pack.normalDataUrl} alt={`${pack.name} normal`} className="w-full h-full object-contain" />
+                      </div>
+                      <div className="aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center bg-white">
+                        <img src={pack.angryDataUrl} alt={`${pack.name} angry`} className="w-full h-full object-contain" />
+                      </div>
+                    </div>
+                    <div className="text-xs font-black text-center text-[hsl(var(--ink))] truncate">{pack.name}{pack.builtin ? " *" : ""}</div>
+                    <div className="flex gap-1 mt-2">
+                      <button
+                        onClick={() => {
+                          setSelectedPackId(pack.id);
+                          refresh();
+                        }}
+                        className="flex-1 text-[10px] font-black py-1 rounded ink-outline-2 bg-[hsl(var(--yellow))]"
+                      >
+                        SELECT
+                      </button>
+                      <button
+                        onClick={() => setExpandedPack(isExpanded ? null : pack.id)}
+                        className="flex-1 text-[10px] font-black py-1 rounded ink-outline-2 bg-[hsl(var(--accent))] text-white"
+                      >
+                        {isExpanded ? "CLOSE" : "SOUNDS"}
+                      </button>
+                      {!pack.builtin && (
+                        <button
+                          onClick={() => handleDelete(pack)}
+                          className={`text-[10px] font-black py-1 px-2 rounded ink-outline-2 ${
+                            canDelete ? "bg-[hsl(var(--angry))] text-white" : "bg-[hsl(var(--cream-dark))] text-[hsl(var(--ink))] opacity-50"
+                          }`}
+                        >
+                          X
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center bg-white">
-                    <img src={pack.angryDataUrl} alt={`${pack.name} angry`} className="w-full h-full object-contain" />
-                  </div>
-                </div>
-                <div className="text-xs font-black text-center text-[hsl(var(--ink))] truncate">{pack.name}{pack.builtin ? " ★" : ""}</div>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => {
-                      setSelectedPackId(pack.id);
-                      refresh();
-                    }}
-                    className="flex-1 text-[10px] font-black py-1 rounded ink-outline-2 bg-[hsl(var(--yellow))]"
-                  >
-                    SELECT
-                  </button>
-                  {!pack.builtin && (
-                    <button
-                      onClick={() => handleDelete(pack)}
-                      className={`text-[10px] font-black py-1 px-2 rounded ink-outline-2 ${
-                        canDelete ? "bg-[hsl(var(--angry))] text-white" : "bg-[hsl(var(--cream-dark))] text-[hsl(var(--ink))] opacity-50"
-                      }`}
-                    >
-                      ✕
-                    </button>
+                  {isExpanded && (
+                    <div className="border-t-2 border-[hsl(var(--ink))] p-3 bg-[hsl(var(--cream-dark)/0.3)] flex flex-col gap-3">
+                      <SoundList
+                        label="NORMAL SOUNDS"
+                        sounds={pack.normalSounds || []}
+                        onAdd={(url) => addSound(pack, "normalSounds", url)}
+                        onRemove={(idx) => removeSound(pack, "normalSounds", idx)}
+                      />
+                      <SoundList
+                        label="ANGRY SOUNDS"
+                        sounds={pack.angrySounds || []}
+                        onAdd={(url) => addSound(pack, "angrySounds", url)}
+                        onRemove={(idx) => removeSound(pack, "angrySounds", idx)}
+                      />
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {!canDelete && (
             <div className="mt-3 text-center text-xs font-bold text-[hsl(var(--angry-dark))]">
