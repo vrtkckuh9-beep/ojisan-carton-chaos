@@ -46,8 +46,9 @@ const Index = () => {
   const [scolded, setScolded] = useState<number>(() => Number(localStorage.getItem("scolded") || 0));
   const [showEndButtons, setShowEndButtons] = useState(false);
 
-  const normalSkin = findSkin(getNormalLibrary(), getSelectedNormalId());
-  const angrySkin = findSkin(getAngryLibrary(), getSelectedAngryId());
+  const pack = findPack(getSelectedPackId());
+  const normalSkin = { dataUrl: pack.normalDataUrl };
+  const angrySkin = { dataUrl: pack.angryDataUrl };
 
   const startGame = () => {
     setAngryIndex(Math.floor(Math.random() * num));
