@@ -1,19 +1,17 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { OjisanFace } from "@/components/OjisanFace";
-import { FaceBorder } from "@/components/FaceBorder";
-import { WoodButton } from "@/components/WoodButton";
 import { SkinFace } from "@/components/SkinFace";
+import { WoodButton } from "@/components/WoodButton";
 import {
-  findSkin,
-  getAngryLibrary,
-  getNormalLibrary,
-  getSelectedAngryId,
-  getSelectedNormalId,
+  SkinMode,
+  SkinPack,
+  getSkinMode,
+  getSkinPacks,
+  getSelectedPack,
+  setSkinMode,
 } from "@/lib/skins";
 
 type Screen = "title" | "game" | "gallery";
-type Mode = "easy" | "hard";
 
 const NUM_OPTIONS = [9, 16, 25, 36] as const;
 type NumOpt = (typeof NUM_OPTIONS)[number];
@@ -44,46 +42,76 @@ const Index = () => {
   const navigate = useNavigate();
   const [screen, setScreen] = useState<Screen>("title");
   const [num, setNum] = useState<NumOpt>(16);
-  const [mode, setMode] = useState<Mode>("easy");
+  const [mode, setModeState] = useState<SkinMode>(getSkinMode);
   const [angryIndex, setAngryIndex] = useState(0);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
   const [quote, setQuote] = useState(QUOTES[0]);
   const [revealed, setRevealed] = useState(false);
   const [scolded, setScolded] = useState<number>(() => Number(localStorage.getItem("scolded") || 0));
   const [showEndButtons, setShowEndButtons] = useState(false);
+  const [shaking, setShaking] = useState(false);
+  const [faceAnimations, setFaceAnimations] = useState<Record<number, string>>({});
+  const [boardPacks, setBoardPacks] = useState<SkinPack[]>([]);
 
-  const normalSkin = findSkin(getNormalLibrary(), getSelectedNormalId());
-  const angrySkin = findSkin(getAngryLibrary(), getSelectedAngryId());
+  const selectedPack = getSelectedPack();
 
-  const startGame = () => {
+  const startGame = useCallback(() => {
+    const packs = getSkinPacks();
     setAngryIndex(Math.floor(Math.random() * num));
     setRemoved(new Set());
     setRevealed(false);
     setShowEndButtons(false);
+    setShaking(false);
+    setFaceAnimations({});
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+
+    if (mode === "multi") {
+      setBoardPacks(packs);
+    } else {
+      setBoardPacks([selectedPack]);
+    }
+
     setScreen("game");
-  };
+  }, [num, mode, selectedPack]);
 
   const tapFace = (i: number) => {
-    if (removed.has(i) || revealed) return;
+    if (removed.has(i) || revealed || faceAnimations[i]) return;
     if (i === angryIndex) {
       setRevealed(true);
+      setShaking(true);
       const s = scolded + 1;
       setScolded(s);
       localStorage.setItem("scolded", String(s));
-      setTimeout(() => setShowEndButtons(true), 900);
+      setTimeout(() => setShaking(false), 600);
+      setTimeout(() => setShowEndButtons(true), 1000);
     } else {
-      setRemoved(new Set([...removed, i]));
+      setFaceAnimations((prev) => ({ ...prev, [i]: "flip-spin-fly" }));
       setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+      setTimeout(() => {
+        setRemoved((prev) => new Set([...prev, i]));
+      }, 800);
     }
+  };
+
+  const getFacePack = (index: number): SkinPack => {
+    if (mode === "multi" && boardPacks.length > 1) {
+      return boardPacks[index % boardPacks.length];
+    }
+    return selectedPack;
+  };
+
+  const getAngryPack = (): SkinPack => {
+    if (mode === "multi" && boardPacks.length > 1) {
+      return boardPacks[angryIndex % boardPacks.length];
+    }
+    return selectedPack;
   };
 
   // ---------- TITLE ----------
   if (screen === "title") {
     return (
       <div className="wood-bg min-h-screen flex flex-col items-center overflow-hidden">
-        <FaceBorder rows={2} />
-        <div className="flex-1 w-full max-w-md mx-auto px-5 py-4 flex flex-col items-center justify-center gap-4">
+        <div className="flex-1 w-full max-w-md mx-auto px-5 py-6 flex flex-col items-center justify-center gap-4">
           {/* Carton package */}
           <button onClick={startGame} className="w-full ink-outline rounded-xl bg-[hsl(var(--cream))] overflow-hidden btn-press text-left" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
             <div className="h-3 bg-[hsl(var(--cream))]" />
@@ -100,7 +128,7 @@ const Index = () => {
                 </div>
               </div>
               <div className="w-20 h-20 bg-white rounded-full ink-outline flex items-center justify-center shrink-0 overflow-hidden">
-                <SkinFace src={angrySkin.dataUrl} className="w-[95%] h-[95%]" />
+                <SkinFace src={selectedPack.angryDataUrl} className="w-[95%] h-[95%]" />
               </div>
             </div>
             <div className="h-1 bg-[hsl(var(--ink))]" />
@@ -125,20 +153,24 @@ const Index = () => {
             ))}
           </div>
 
-          {/* Mode selector */}
+          {/* Skin mode selector */}
           <div className="w-full bg-[hsl(var(--ink))] ink-outline rounded-full p-1 flex items-center gap-1">
-            {(["easy", "hard"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`flex-1 py-2 rounded-full font-black text-base ink-outline-2 flex items-center justify-center gap-2 capitalize ${
-                  mode === m ? "bg-[hsl(var(--yellow))] text-[hsl(var(--ink))]" : "bg-[hsl(0_0%_45%)] text-white"
-                }`}
-              >
-                <span className="w-6 h-6"><OjisanFace variant="normal" triple={m === "hard"} className="w-full h-full" /></span>
-                {m}
-              </button>
-            ))}
+            <button
+              onClick={() => { setSkinMode("single"); setModeState("single"); }}
+              className={`flex-1 py-2 rounded-full font-black text-base ink-outline-2 transition-colors ${
+                mode === "single" ? "bg-[hsl(var(--yellow))] text-[hsl(var(--ink))]" : "bg-[hsl(0_0%_45%)] text-white"
+              }`}
+            >
+              1
+            </button>
+            <button
+              onClick={() => { setSkinMode("multi"); setModeState("multi"); }}
+              className={`flex-1 py-2 rounded-full font-black text-base ink-outline-2 transition-colors ${
+                mode === "multi" ? "bg-[hsl(var(--yellow))] text-[hsl(var(--ink))]" : "bg-[hsl(0_0%_45%)] text-white"
+              }`}
+            >
+              MULTI
+            </button>
           </div>
 
           <div className="w-full flex items-center gap-3 mt-1">
@@ -167,7 +199,6 @@ const Index = () => {
             </div>
           </div>
         </div>
-        <FaceBorder rows={2} />
       </div>
     );
   }
@@ -175,8 +206,14 @@ const Index = () => {
   // ---------- GAME ----------
   if (screen === "game") {
     const c = cols(num);
+    const angryPack = getAngryPack();
     return (
-      <div className="wood-bg min-h-screen flex flex-col">
+      <div className={`wood-bg min-h-screen flex flex-col ${shaking ? "animate-screen-shake" : ""}`}>
+        {/* Rage flash overlay */}
+        {revealed && (
+          <div className="fixed inset-0 bg-[hsl(var(--angry))] animate-rage-flash pointer-events-none z-40" />
+        )}
+
         {/* Quote banner */}
         <div className="px-3 pt-3">
           <div className="bg-[hsl(var(--cream))] ink-outline rounded-xl py-3 px-4 text-center font-black text-[hsl(var(--ink))] text-base" style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}>
@@ -198,20 +235,23 @@ const Index = () => {
                   const isRemoved = removed.has(i);
                   const isAngry = i === angryIndex;
                   const showAngry = revealed && isAngry;
-                  const scatter = revealed && !isAngry;
-                  const tx = (Math.random() - 0.5) * 400 + "px";
-                  const ty = (Math.random() - 0.5) * 400 + "px";
-                  const tr = (Math.random() - 0.5) * 720 + "deg";
+                  const anim = faceAnimations[i];
+                  const facePack = isAngry ? angryPack : getFacePack(i);
+
                   return (
-                    <div key={i} className="relative bg-[hsl(var(--cream-dark))] ink-outline-2 rounded-full flex items-center justify-center overflow-visible">
-                      {!isRemoved && (
+                    <div key={i} className="relative flex items-center justify-center overflow-visible">
+                      {!isRemoved && !showAngry && (
                         <button
                           onClick={() => tapFace(i)}
-                          className={`w-[110%] h-[110%] btn-press ${scatter ? "animate-scatter" : ""} ${showAngry ? "animate-angry-erupt" : ""}`}
-                          style={scatter ? ({ ["--tx" as any]: tx, ["--ty" as any]: ty, ["--tr" as any]: tr } as React.CSSProperties) : undefined}
+                          className={`w-full h-full btn-press ${anim === "flip-spin-fly" ? "animate-flip-spin-fly" : ""}`}
                         >
-                          <SkinFace src={showAngry ? angrySkin.dataUrl : normalSkin.dataUrl} className="w-full h-full" />
+                          <SkinFace src={facePack.normalDataUrl} className="w-full h-full" />
                         </button>
+                      )}
+                      {showAngry && (
+                        <div className="absolute inset-0 flex items-center justify-center z-50 animate-angry-explode">
+                          <SkinFace src={angryPack.angryDataUrl} className="w-full h-full" />
+                        </div>
                       )}
                     </div>
                   );
@@ -220,7 +260,7 @@ const Index = () => {
             </div>
 
             {revealed && (
-              <div className="absolute inset-0 flex items-start justify-center pointer-events-none pt-2">
+              <div className="absolute inset-0 flex items-start justify-center pointer-events-none pt-2 z-50">
                 <div className="bg-[hsl(var(--yellow))] ink-outline rounded-xl px-5 py-2 font-black text-xl text-[hsl(var(--ink))] text-shadow-hard animate-pop-in" style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}>
                   Angry Uncle Appears!
                 </div>
@@ -233,10 +273,7 @@ const Index = () => {
           <div className="px-4 pb-4 w-full max-w-md mx-auto flex flex-col gap-2 animate-fade-up">
             <div className="text-center text-[hsl(var(--cream))] font-black">Scolded: {scolded}</div>
             <WoodButton variant="yellow" onClick={startGame}>REPLAY</WoodButton>
-            <div className="flex gap-2">
-              <div className="flex-1"><WoodButton onClick={() => setScreen("gallery")}>REVIEW</WoodButton></div>
-              <div className="flex-1"><WoodButton onClick={() => setScreen("title")}>TITLE</WoodButton></div>
-            </div>
+            <WoodButton onClick={() => setScreen("title")}>TITLE</WoodButton>
           </div>
         ) : (
           <div className="px-3 pb-4">
@@ -253,6 +290,7 @@ const Index = () => {
     );
   }
 
+  // ---------- GALLERY / SETTING ----------
   const unlocked = Math.min(CHARACTERS.length, Math.floor(scolded / 3));
   return (
     <div className="wood-bg min-h-screen flex flex-col">
@@ -271,7 +309,11 @@ const Index = () => {
               return (
                 <div key={name} className="flex flex-col items-center gap-1">
                   <div className={`w-full aspect-square ink-outline-2 rounded-lg flex items-center justify-center ${isUnlocked ? "bg-[hsl(var(--yellow-glow))]" : "bg-[hsl(var(--cream-dark))]"}`}>
-                    <OjisanFace variant={isUnlocked ? "tiny" : "silhouette"} className="w-[85%] h-[85%]" />
+                    <SkinFace
+                      src={isUnlocked ? selectedPack.normalDataUrl : selectedPack.angryDataUrl}
+                      className="w-[85%] h-[85%]"
+                      style={isUnlocked ? {} : { filter: "brightness(0) opacity(0.3)" }}
+                    />
                   </div>
                   <div className="text-[10px] font-black text-[hsl(var(--ink))] text-center leading-tight">{name}</div>
                   <button className="text-[9px] font-bold bg-[hsl(var(--ink))] text-white rounded-full px-2 py-0.5">

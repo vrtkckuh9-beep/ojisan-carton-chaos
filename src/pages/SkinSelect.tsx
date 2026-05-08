@@ -1,35 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  getAngryLibrary,
-  getNormalLibrary,
-  getSelectedAngryId,
-  getSelectedNormalId,
-  setSelectedAngryId,
-  setSelectedNormalId,
+  getSkinPacks,
+  getSelectedPackId,
+  setSelectedPackId,
 } from "@/lib/skins";
-
-type Tab = "normal" | "angry";
 
 const SkinSelect = () => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>("normal");
-  const [selN, setSelN] = useState(getSelectedNormalId());
-  const [selA, setSelA] = useState(getSelectedAngryId());
+  const [selId, setSelId] = useState(getSelectedPackId());
 
-  const normals = getNormalLibrary();
-  const angries = getAngryLibrary();
-  const skins = tab === "normal" ? normals : angries;
-  const sel = tab === "normal" ? selN : selA;
+  const packs = getSkinPacks();
 
   const pick = (id: string) => {
-    if (tab === "normal") {
-      setSelectedNormalId(id);
-      setSelN(id);
-    } else {
-      setSelectedAngryId(id);
-      setSelA(id);
-    }
+    setSelectedPackId(id);
+    setSelId(id);
   };
 
   return (
@@ -40,41 +25,31 @@ const SkinSelect = () => {
         <div className="w-16" />
       </div>
 
-      <div className="px-4">
-        <div className="bg-[hsl(var(--ink))] ink-outline rounded-full p-1 flex gap-1">
-          {(["normal", "angry"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-2 rounded-full font-black text-base ink-outline-2 capitalize ${
-                tab === t ? "bg-[hsl(var(--yellow))] text-[hsl(var(--ink))]" : "bg-[hsl(0_0%_45%)] text-white"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="px-4 py-4 flex-1 overflow-y-auto">
         <div className="bg-[hsl(var(--cream))] ink-outline rounded-2xl p-4" style={{ boxShadow: "0 5px 0 hsl(var(--ink))" }}>
-          <div className="grid grid-cols-3 gap-3">
-            {skins.map((s) => {
-              const active = s.id === sel;
+          <div className="font-black text-[hsl(var(--ink))] text-sm mb-3 text-center">Select a skin pack</div>
+          <div className="grid grid-cols-2 gap-3">
+            {packs.map((pack) => {
+              const active = pack.id === selId;
               return (
                 <button
-                  key={s.id}
-                  onClick={() => pick(s.id)}
+                  key={pack.id}
+                  onClick={() => pick(pack.id)}
                   className={`flex flex-col gap-1 btn-press ${active ? "" : "opacity-90"}`}
                 >
                   <div
-                    className={`aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center ${
-                      active ? "bg-[hsl(var(--yellow-glow))] ring-4 ring-[hsl(var(--yellow))]" : "bg-white"
+                    className={`grid grid-cols-2 gap-0.5 ink-outline-2 rounded-lg overflow-hidden ${
+                      active ? "ring-4 ring-[hsl(var(--yellow))]" : ""
                     }`}
                   >
-                    <img src={s.dataUrl} alt={s.name} className="w-full h-full object-contain" />
+                    <div className="aspect-square bg-white flex items-center justify-center">
+                      <img src={pack.normalDataUrl} alt={`${pack.name} normal`} className="w-full h-full object-contain" />
+                    </div>
+                    <div className="aspect-square bg-white flex items-center justify-center">
+                      <img src={pack.angryDataUrl} alt={`${pack.name} angry`} className="w-full h-full object-contain" />
+                    </div>
                   </div>
-                  <div className="text-xs font-black text-center text-[hsl(var(--ink))] truncate">{s.name}</div>
+                  <div className="text-xs font-black text-center text-[hsl(var(--ink))] truncate">{pack.name}{pack.builtin ? " ★" : ""}</div>
                 </button>
               );
             })}

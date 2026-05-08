@@ -1,76 +1,82 @@
 import normalDefault from "@/assets/skin-normal-default.png";
 import angryDefault from "@/assets/skin-angry-default.png";
 
-export type Skin = {
+export type SkinPack = {
   id: string;
   name: string;
-  dataUrl: string; // imported asset URL or base64 data URL
+  normalDataUrl: string;
+  angryDataUrl: string;
   builtin?: boolean;
 };
 
+export type SkinMode = "single" | "multi";
+
 const KEYS = {
-  libNormal: "angryOjisan_skinLibrary_normal",
-  libAngry: "angryOjisan_skinLibrary_angry",
-  defNormal: "angryOjisan_defaultNormalSkin",
-  defAngry: "angryOjisan_defaultAngrySkin",
-  selNormal: "angryOjisan_selectedNormalSkin",
-  selAngry: "angryOjisan_selectedAngrySkin",
+  skinPacks: "angryOjisan_skinPacks",
+  selectedPack: "angryOjisan_selectedSkinPack",
+  skinMode: "angryOjisan_skinMode",
   adminAuth: "angryOjisan_adminAuth",
 };
 
 export const ADMIN_PASSWORD = "ojisan2026";
 
-export const BUILTIN_NORMAL: Skin = {
-  id: "builtin-normal",
+export const BUILTIN_PACK: SkinPack = {
+  id: "builtin-default",
   name: "Default",
-  dataUrl: normalDefault,
-  builtin: true,
-};
-export const BUILTIN_ANGRY: Skin = {
-  id: "builtin-angry",
-  name: "Default",
-  dataUrl: angryDefault,
+  normalDataUrl: normalDefault,
+  angryDataUrl: angryDefault,
   builtin: true,
 };
 
-const read = (key: string): Skin[] => {
+const readPacks = (): SkinPack[] => {
   try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as Skin[]) : [];
+    const raw = localStorage.getItem(KEYS.skinPacks);
+    return raw ? (JSON.parse(raw) as SkinPack[]) : [];
   } catch {
     return [];
   }
 };
 
-const write = (key: string, skins: Skin[]) => {
-  localStorage.setItem(key, JSON.stringify(skins));
+const writePacks = (packs: SkinPack[]) => {
+  localStorage.setItem(KEYS.skinPacks, JSON.stringify(packs));
 };
 
-export const getNormalLibrary = (): Skin[] => [BUILTIN_NORMAL, ...read(KEYS.libNormal)];
-export const getAngryLibrary = (): Skin[] => [BUILTIN_ANGRY, ...read(KEYS.libAngry)];
+export const getSkinPacks = (): SkinPack[] => [BUILTIN_PACK, ...readPacks()];
 
-export const addNormalSkin = (s: Skin) => write(KEYS.libNormal, [...read(KEYS.libNormal), s]);
-export const addAngrySkin = (s: Skin) => write(KEYS.libAngry, [...read(KEYS.libAngry), s]);
+export const addSkinPack = (pack: SkinPack) => writePacks([...readPacks(), pack]);
 
-export const removeNormalSkin = (id: string) =>
-  write(KEYS.libNormal, read(KEYS.libNormal).filter((s) => s.id !== id));
-export const removeAngrySkin = (id: string) =>
-  write(KEYS.libAngry, read(KEYS.libAngry).filter((s) => s.id !== id));
+export const removeSkinPack = (id: string): boolean => {
+  const all = getSkinPacks();
+  if (all.length <= 1) return false;
+  writePacks(readPacks().filter((p) => p.id !== id));
+  if (getSelectedPackId() === id) {
+    setSelectedPackId(BUILTIN_PACK.id);
+  }
+  return true;
+};
 
-export const setDefaultNormal = (id: string) => localStorage.setItem(KEYS.defNormal, id);
-export const setDefaultAngry = (id: string) => localStorage.setItem(KEYS.defAngry, id);
-export const getDefaultNormalId = () => localStorage.getItem(KEYS.defNormal) || BUILTIN_NORMAL.id;
-export const getDefaultAngryId = () => localStorage.getItem(KEYS.defAngry) || BUILTIN_ANGRY.id;
+export const canDeletePack = (): boolean => getSkinPacks().length > 1;
 
-export const getSelectedNormalId = () =>
-  localStorage.getItem(KEYS.selNormal) || getDefaultNormalId();
-export const getSelectedAngryId = () =>
-  localStorage.getItem(KEYS.selAngry) || getDefaultAngryId();
-export const setSelectedNormalId = (id: string) => localStorage.setItem(KEYS.selNormal, id);
-export const setSelectedAngryId = (id: string) => localStorage.setItem(KEYS.selAngry, id);
+export const getSelectedPackId = () =>
+  localStorage.getItem(KEYS.selectedPack) || BUILTIN_PACK.id;
 
-export const findSkin = (lib: Skin[], id: string): Skin =>
-  lib.find((s) => s.id === id) || lib[0];
+export const setSelectedPackId = (id: string) =>
+  localStorage.setItem(KEYS.selectedPack, id);
+
+export const getSelectedPack = (): SkinPack => {
+  const packs = getSkinPacks();
+  const selId = getSelectedPackId();
+  return packs.find((p) => p.id === selId) || packs[0];
+};
+
+export const findPack = (packs: SkinPack[], id: string): SkinPack =>
+  packs.find((p) => p.id === id) || packs[0];
+
+export const getSkinMode = (): SkinMode =>
+  (localStorage.getItem(KEYS.skinMode) as SkinMode) || "single";
+
+export const setSkinMode = (mode: SkinMode) =>
+  localStorage.setItem(KEYS.skinMode, mode);
 
 export const isAdmin = () => localStorage.getItem(KEYS.adminAuth) === "1";
 export const setAdmin = (v: boolean) => {

@@ -1,21 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ADMIN_PASSWORD,
-  Skin,
-  addAngrySkin,
-  addNormalSkin,
+  SkinPack,
+  addSkinPack,
+  canDeletePack,
   fileToDataUrl,
-  getAngryLibrary,
-  getDefaultAngryId,
-  getDefaultNormalId,
-  getNormalLibrary,
+  getSkinPacks,
   isAdmin,
-  removeAngrySkin,
-  removeNormalSkin,
+  removeSkinPack,
   setAdmin,
-  setDefaultAngry,
-  setDefaultNormal,
+  setSelectedPackId,
 } from "@/lib/skins";
 import { WoodButton } from "@/components/WoodButton";
 
@@ -25,6 +20,11 @@ const Admin = () => {
   const [pw, setPw] = useState("");
   const [, force] = useState(0);
   const refresh = () => force((n) => n + 1);
+  const normalRef = useRef<HTMLInputElement>(null);
+  const angryRef = useRef<HTMLInputElement>(null);
+  const [normalPreview, setNormalPreview] = useState<string | null>(null);
+  const [angryPreview, setAngryPreview] = useState<string | null>(null);
+  const [packName, setPackName] = useState("");
 
   if (!authed) {
     return (
@@ -59,83 +59,55 @@ const Admin = () => {
     );
   }
 
-  const normals = getNormalLibrary();
-  const angries = getAngryLibrary();
-  const defNormalId = getDefaultNormalId();
-  const defAngryId = getDefaultAngryId();
+  const packs = getSkinPacks();
+  const canDelete = canDeletePack();
 
-  const handleUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    kind: "normal" | "angry",
-  ) => {
+  const handleNormalFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const dataUrl = await fileToDataUrl(file);
-    const name = prompt("Skin name?", file.name.replace(/\.[^.]+$/, "")) || "Untitled";
-    const skin: Skin = { id: `${kind}-${Date.now()}`, name, dataUrl };
-    if (kind === "normal") addNormalSkin(skin);
-    else addAngrySkin(skin);
-    e.target.value = "";
+    const url = await fileToDataUrl(file);
+    setNormalPreview(url);
+    if (!packName) setPackName(file.name.replace(/\.[^.]+$/, ""));
+  };
+
+  const handleAngryFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await fileToDataUrl(file);
+    setAngryPreview(url);
+  };
+
+  const handleAddPack = () => {
+    if (!normalPreview || !angryPreview) {
+      alert("Both normal and angry images are required!");
+      return;
+    }
+    const name = packName.trim() || "Untitled Pack";
+    const pack: SkinPack = {
+      id: `pack-${Date.now()}`,
+      name,
+      normalDataUrl: normalPreview,
+      angryDataUrl: angryPreview,
+    };
+    addSkinPack(pack);
+    setNormalPreview(null);
+    setAngryPreview(null);
+    setPackName("");
+    if (normalRef.current) normalRef.current.value = "";
+    if (angryRef.current) angryRef.current.value = "";
     refresh();
   };
 
-  const Section = ({
-    title,
-    skins,
-    kind,
-    defaultId,
-  }: {
-    title: string;
-    skins: Skin[];
-    kind: "normal" | "angry";
-    defaultId: string;
-  }) => (
-    <div className="bg-[hsl(var(--cream))] ink-outline rounded-2xl p-4" style={{ boxShadow: "0 5px 0 hsl(var(--ink))" }}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="font-black text-[hsl(var(--ink))] text-lg">{title}</div>
-        <label className="px-3 py-1.5 rounded-full bg-[hsl(var(--yellow))] ink-outline-2 font-black text-sm text-[hsl(var(--ink))] cursor-pointer btn-press">
-          + UPLOAD
-          <input type="file" accept="image/*" hidden onChange={(e) => handleUpload(e, kind)} />
-        </label>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        {skins.map((s) => {
-          const isDefault = s.id === defaultId;
-          return (
-            <div key={s.id} className="flex flex-col gap-1">
-              <div className={`aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center ${isDefault ? "bg-[hsl(var(--yellow-glow))]" : "bg-white"}`}>
-                <img src={s.dataUrl} alt={s.name} className="w-full h-full object-contain" />
-              </div>
-              <div className="text-xs font-black text-center text-[hsl(var(--ink))] truncate">{s.name}{s.builtin ? " ★" : ""}</div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => {
-                    kind === "normal" ? setDefaultNormal(s.id) : setDefaultAngry(s.id);
-                    refresh();
-                  }}
-                  className={`flex-1 text-[10px] font-black py-1 rounded ink-outline-2 ${isDefault ? "bg-[hsl(var(--yellow))]" : "bg-white"}`}
-                >
-                  {isDefault ? "DEFAULT" : "SET"}
-                </button>
-                {!s.builtin && (
-                  <button
-                    onClick={() => {
-                      if (!confirm(`Delete ${s.name}?`)) return;
-                      kind === "normal" ? removeNormalSkin(s.id) : removeAngrySkin(s.id);
-                      refresh();
-                    }}
-                    className="text-[10px] font-black py-1 px-2 rounded ink-outline-2 bg-[hsl(var(--angry))] text-white"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+  const handleDelete = (pack: SkinPack) => {
+    if (pack.builtin) return;
+    if (!canDelete) {
+      alert("At least one skin pack must remain.");
+      return;
+    }
+    if (!confirm(`Delete "${pack.name}"?`)) return;
+    removeSkinPack(pack.id);
+    refresh();
+  };
 
   return (
     <div className="wood-bg min-h-screen overflow-y-auto">
@@ -145,8 +117,95 @@ const Admin = () => {
           <div className="font-black text-[hsl(var(--cream))] text-xl">ADMIN</div>
           <button onClick={() => { setAdmin(false); setAuthed(false); }} className="px-3 py-2 ink-outline rounded-full bg-[hsl(var(--ink))] text-white font-black text-sm btn-press">LOGOUT</button>
         </div>
-        <Section title="NORMAL SKINS" skins={normals} kind="normal" defaultId={defNormalId} />
-        <Section title="ANGRY SKINS" skins={angries} kind="angry" defaultId={defAngryId} />
+
+        {/* Upload new pack */}
+        <div className="bg-[hsl(var(--cream))] ink-outline rounded-2xl p-4" style={{ boxShadow: "0 5px 0 hsl(var(--ink))" }}>
+          <div className="font-black text-[hsl(var(--ink))] text-lg mb-3">ADD SKIN PACK</div>
+          <input
+            type="text"
+            value={packName}
+            onChange={(e) => setPackName(e.target.value)}
+            placeholder="Pack name"
+            className="w-full ink-outline-2 rounded-lg px-3 py-2 font-bold text-[hsl(var(--ink))] bg-white mb-3"
+          />
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="flex flex-col gap-2">
+              <div className="text-xs font-black text-[hsl(var(--ink))]">NORMAL FACE</div>
+              <label className="aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center bg-white cursor-pointer">
+                {normalPreview ? (
+                  <img src={normalPreview} alt="Normal" className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-[hsl(var(--ink))] font-black text-sm text-center p-2">+ Normal</span>
+                )}
+                <input ref={normalRef} type="file" accept="image/*" hidden onChange={handleNormalFile} />
+              </label>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="text-xs font-black text-[hsl(var(--ink))]">ANGRY FACE</div>
+              <label className="aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center bg-white cursor-pointer">
+                {angryPreview ? (
+                  <img src={angryPreview} alt="Angry" className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-[hsl(var(--ink))] font-black text-sm text-center p-2">+ Angry</span>
+                )}
+                <input ref={angryRef} type="file" accept="image/*" hidden onChange={handleAngryFile} />
+              </label>
+            </div>
+          </div>
+          <WoodButton
+            variant="yellow"
+            onClick={handleAddPack}
+            disabled={!normalPreview || !angryPreview}
+          >
+            ADD PACK
+          </WoodButton>
+        </div>
+
+        {/* Existing packs */}
+        <div className="bg-[hsl(var(--cream))] ink-outline rounded-2xl p-4" style={{ boxShadow: "0 5px 0 hsl(var(--ink))" }}>
+          <div className="font-black text-[hsl(var(--ink))] text-lg mb-3">SKIN PACKS</div>
+          <div className="grid grid-cols-2 gap-3">
+            {packs.map((pack) => (
+              <div key={pack.id} className="flex flex-col gap-1">
+                <div className="grid grid-cols-2 gap-1">
+                  <div className="aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center bg-white">
+                    <img src={pack.normalDataUrl} alt={`${pack.name} normal`} className="w-full h-full object-contain" />
+                  </div>
+                  <div className="aspect-square ink-outline-2 rounded-lg overflow-hidden flex items-center justify-center bg-white">
+                    <img src={pack.angryDataUrl} alt={`${pack.name} angry`} className="w-full h-full object-contain" />
+                  </div>
+                </div>
+                <div className="text-xs font-black text-center text-[hsl(var(--ink))] truncate">{pack.name}{pack.builtin ? " ★" : ""}</div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => {
+                      setSelectedPackId(pack.id);
+                      refresh();
+                    }}
+                    className="flex-1 text-[10px] font-black py-1 rounded ink-outline-2 bg-[hsl(var(--yellow))]"
+                  >
+                    SELECT
+                  </button>
+                  {!pack.builtin && (
+                    <button
+                      onClick={() => handleDelete(pack)}
+                      className={`text-[10px] font-black py-1 px-2 rounded ink-outline-2 ${
+                        canDelete ? "bg-[hsl(var(--angry))] text-white" : "bg-[hsl(var(--cream-dark))] text-[hsl(var(--ink))] opacity-50"
+                      }`}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {!canDelete && (
+            <div className="mt-3 text-center text-xs font-bold text-[hsl(var(--angry-dark))]">
+              At least one skin pack must remain.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
