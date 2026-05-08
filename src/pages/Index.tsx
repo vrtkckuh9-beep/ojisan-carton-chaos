@@ -45,13 +45,12 @@ const Index = () => {
   const [screen, setScreen] = useState<Screen>("title");
   const [num, setNum] = useState<NumOpt>(16);
   const [mode, setMode] = useState<Mode>("easy");
-  const [phase, setPhase] = useState<Phase>("lid");
   const [angryIndex, setAngryIndex] = useState(0);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
   const [quote, setQuote] = useState(QUOTES[0]);
   const [revealed, setRevealed] = useState(false);
   const [scolded, setScolded] = useState<number>(() => Number(localStorage.getItem("scolded") || 0));
-  const [lidOpening, setLidOpening] = useState(false);
+  const [showEndButtons, setShowEndButtons] = useState(false);
 
   const normalSkin = findSkin(getNormalLibrary(), getSelectedNormalId());
   const angrySkin = findSkin(getAngryLibrary(), getSelectedAngryId());
@@ -60,18 +59,9 @@ const Index = () => {
     setAngryIndex(Math.floor(Math.random() * num));
     setRemoved(new Set());
     setRevealed(false);
-    setQuote("Touch the lid");
-    setPhase("lid");
-    setLidOpening(false);
+    setShowEndButtons(false);
+    setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
     setScreen("game");
-  };
-
-  const openLid = () => {
-    setLidOpening(true);
-    setTimeout(() => {
-      setPhase("open");
-      setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
-    }, 600);
   };
 
   const tapFace = (i: number) => {
@@ -81,7 +71,7 @@ const Index = () => {
       const s = scolded + 1;
       setScolded(s);
       localStorage.setItem("scolded", String(s));
-      setTimeout(() => setScreen("result"), 1400);
+      setTimeout(() => setShowEndButtons(true), 900);
     } else {
       setRemoved(new Set([...removed, i]));
       setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
