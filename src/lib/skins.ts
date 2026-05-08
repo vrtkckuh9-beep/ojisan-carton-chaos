@@ -8,14 +8,6 @@ export type Skin = {
   builtin?: boolean;
 };
 
-export type SkinPack = {
-  id: string;
-  name: string;
-  normalDataUrl: string;
-  angryDataUrl: string;
-  builtin?: boolean;
-};
-
 const KEYS = {
   libNormal: "angryOjisan_skinLibrary_normal",
   libAngry: "angryOjisan_skinLibrary_angry",
@@ -24,9 +16,6 @@ const KEYS = {
   selNormal: "angryOjisan_selectedNormalSkin",
   selAngry: "angryOjisan_selectedAngrySkin",
   adminAuth: "angryOjisan_adminAuth",
-  packs: "angryOjisan_skinPacks",
-  defPack: "angryOjisan_defaultSkinPack",
-  selPack: "angryOjisan_selectedSkinPack",
 };
 
 export const ADMIN_PASSWORD = "ojisan2026";
@@ -96,45 +85,3 @@ export const fileToDataUrl = (file: File): Promise<string> =>
     r.onerror = reject;
     r.readAsDataURL(file);
   });
-
-// ---------- Skin Packs (AI-generated normal+angry pairs) ----------
-
-export const BUILTIN_PACK: SkinPack = {
-  id: "builtin-pack",
-  name: "Default Ojisan",
-  normalDataUrl: normalDefault,
-  angryDataUrl: angryDefault,
-  builtin: true,
-};
-
-const readPacks = (): SkinPack[] => {
-  try {
-    const raw = localStorage.getItem(KEYS.packs);
-    return raw ? (JSON.parse(raw) as SkinPack[]) : [];
-  } catch {
-    return [];
-  }
-};
-const writePacks = (packs: SkinPack[]) =>
-  localStorage.setItem(KEYS.packs, JSON.stringify(packs));
-
-export const getSkinPacks = (): SkinPack[] => [BUILTIN_PACK, ...readPacks()];
-export const addSkinPack = (p: SkinPack) => writePacks([...readPacks(), p]);
-export const removeSkinPack = (id: string) =>
-  writePacks(readPacks().filter((p) => p.id !== id));
-
-export const getDefaultPackId = () =>
-  localStorage.getItem(KEYS.defPack) || BUILTIN_PACK.id;
-export const setDefaultPackId = (id: string) =>
-  localStorage.setItem(KEYS.defPack, id);
-
-export const getSelectedPackId = () =>
-  localStorage.getItem(KEYS.selPack) || getDefaultPackId();
-export const setSelectedPackId = (id: string) =>
-  localStorage.setItem(KEYS.selPack, id);
-
-export const findPack = (id: string): SkinPack => {
-  const all = getSkinPacks();
-  return all.find((p) => p.id === id) || all[0];
-};
-

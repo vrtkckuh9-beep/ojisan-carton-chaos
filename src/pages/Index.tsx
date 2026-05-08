@@ -4,7 +4,13 @@ import { OjisanFace } from "@/components/OjisanFace";
 import { FaceBorder } from "@/components/FaceBorder";
 import { WoodButton } from "@/components/WoodButton";
 import { SkinFace } from "@/components/SkinFace";
-import { findPack, getSelectedPackId } from "@/lib/skins";
+import {
+  findSkin,
+  getAngryLibrary,
+  getNormalLibrary,
+  getSelectedAngryId,
+  getSelectedNormalId,
+} from "@/lib/skins";
 
 type Screen = "title" | "game" | "gallery";
 type Mode = "easy" | "hard";
@@ -46,9 +52,8 @@ const Index = () => {
   const [scolded, setScolded] = useState<number>(() => Number(localStorage.getItem("scolded") || 0));
   const [showEndButtons, setShowEndButtons] = useState(false);
 
-  const pack = findPack(getSelectedPackId());
-  const normalSkin = { dataUrl: pack.normalDataUrl };
-  const angrySkin = { dataUrl: pack.angryDataUrl };
+  const normalSkin = findSkin(getNormalLibrary(), getSelectedNormalId());
+  const angrySkin = findSkin(getAngryLibrary(), getSelectedAngryId());
 
   const startGame = () => {
     setAngryIndex(Math.floor(Math.random() * num));
