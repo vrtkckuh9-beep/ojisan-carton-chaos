@@ -12,9 +12,8 @@ import {
   getSelectedNormalId,
 } from "@/lib/skins";
 
-type Screen = "title" | "game" | "result" | "gallery";
+type Screen = "title" | "game" | "gallery";
 type Mode = "easy" | "hard";
-type Phase = "lid" | "open";
 
 const NUM_OPTIONS = [9, 16, 25, 36] as const;
 type NumOpt = (typeof NUM_OPTIONS)[number];
