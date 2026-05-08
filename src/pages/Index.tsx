@@ -12,9 +12,8 @@ import {
   getSelectedNormalId,
 } from "@/lib/skins";
 
-type Screen = "title" | "game" | "result" | "gallery";
+type Screen = "title" | "game" | "gallery";
 type Mode = "easy" | "hard";
-type Phase = "lid" | "open";
 
 const NUM_OPTIONS = [9, 16, 25, 36] as const;
 type NumOpt = (typeof NUM_OPTIONS)[number];
@@ -46,13 +45,12 @@ const Index = () => {
   const [screen, setScreen] = useState<Screen>("title");
   const [num, setNum] = useState<NumOpt>(16);
   const [mode, setMode] = useState<Mode>("easy");
-  const [phase, setPhase] = useState<Phase>("lid");
   const [angryIndex, setAngryIndex] = useState(0);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
   const [quote, setQuote] = useState(QUOTES[0]);
   const [revealed, setRevealed] = useState(false);
   const [scolded, setScolded] = useState<number>(() => Number(localStorage.getItem("scolded") || 0));
-  const [lidOpening, setLidOpening] = useState(false);
+  const [showEndButtons, setShowEndButtons] = useState(false);
 
   const normalSkin = findSkin(getNormalLibrary(), getSelectedNormalId());
   const angrySkin = findSkin(getAngryLibrary(), getSelectedAngryId());
@@ -61,18 +59,9 @@ const Index = () => {
     setAngryIndex(Math.floor(Math.random() * num));
     setRemoved(new Set());
     setRevealed(false);
-    setQuote("Touch the lid");
-    setPhase("lid");
-    setLidOpening(false);
+    setShowEndButtons(false);
+    setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
     setScreen("game");
-  };
-
-  const openLid = () => {
-    setLidOpening(true);
-    setTimeout(() => {
-      setPhase("open");
-      setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
-    }, 600);
   };
 
   const tapFace = (i: number) => {
@@ -82,7 +71,7 @@ const Index = () => {
       const s = scolded + 1;
       setScolded(s);
       localStorage.setItem("scolded", String(s));
-      setTimeout(() => setScreen("result"), 1400);
+      setTimeout(() => setShowEndButtons(true), 900);
     } else {
       setRemoved(new Set([...removed, i]));
       setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
@@ -196,90 +185,74 @@ const Index = () => {
         </div>
 
         <div className="flex-1 flex items-center justify-center p-4">
-          <div className="w-full max-w-md">
-            {phase === "lid" ? (
-              <button
-                onClick={openLid}
-                className="w-full ink-outline rounded-2xl bg-[hsl(var(--cream))] overflow-hidden btn-press"
-                style={{ boxShadow: "0 6px 0 hsl(var(--ink))", aspectRatio: "1/1" }}
-              >
-                <div className={`w-full h-full bg-[hsl(var(--maroon))] flex items-center justify-center ${lidOpening ? "animate-lid-open" : "animate-wiggle"}`}>
-                  <div className="text-[hsl(var(--yellow))] text-stroke-white text-shadow-hard font-black text-3xl text-center px-4">
-                    TOUCH<br/>THE LID
-                  </div>
-                </div>
-              </button>
-            ) : (
+          <div className="w-full max-w-md relative">
+            <div
+              className="w-full ink-outline rounded-2xl bg-[hsl(var(--cream))] p-3 animate-pop-in"
+              style={{ boxShadow: "0 6px 0 hsl(var(--ink))", aspectRatio: "1/1" }}
+            >
               <div
-                className="w-full ink-outline rounded-2xl bg-[hsl(var(--cream))] p-3 animate-pop-in"
-                style={{ boxShadow: "0 6px 0 hsl(var(--ink))", aspectRatio: "1/1" }}
+                className="w-full h-full grid gap-2"
+                style={{ gridTemplateColumns: `repeat(${c}, minmax(0,1fr))`, gridTemplateRows: `repeat(${c}, minmax(0,1fr))` }}
               >
-                <div
-                  className="w-full h-full grid gap-2"
-                  style={{ gridTemplateColumns: `repeat(${c}, minmax(0,1fr))`, gridTemplateRows: `repeat(${c}, minmax(0,1fr))` }}
-                >
-                  {Array.from({ length: num }).map((_, i) => {
-                    const isRemoved = removed.has(i);
-                    const isAngry = i === angryIndex;
-                    const showAngry = revealed && isAngry;
-                    const scatter = revealed && !isAngry;
-                    const tx = (Math.random() - 0.5) * 400 + "px";
-                    const ty = (Math.random() - 0.5) * 400 + "px";
-                    const tr = (Math.random() - 0.5) * 720 + "deg";
-                    return (
-                      <div key={i} className="relative bg-[hsl(var(--cream-dark))] ink-outline-2 rounded-full flex items-center justify-center overflow-visible">
-                        {!isRemoved && (
-                          <button
-                            onClick={() => tapFace(i)}
-                            className={`w-[110%] h-[110%] btn-press ${scatter ? "animate-scatter" : ""} ${showAngry ? "animate-angry-erupt" : ""}`}
-                            style={scatter ? ({ ["--tx" as any]: tx, ["--ty" as any]: ty, ["--tr" as any]: tr } as React.CSSProperties) : undefined}
-                          >
-                            <SkinFace src={showAngry ? angrySkin.dataUrl : normalSkin.dataUrl} className="w-full h-full" />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
+                {Array.from({ length: num }).map((_, i) => {
+                  const isRemoved = removed.has(i);
+                  const isAngry = i === angryIndex;
+                  const showAngry = revealed && isAngry;
+                  const scatter = revealed && !isAngry;
+                  const tx = (Math.random() - 0.5) * 400 + "px";
+                  const ty = (Math.random() - 0.5) * 400 + "px";
+                  const tr = (Math.random() - 0.5) * 720 + "deg";
+                  return (
+                    <div key={i} className="relative bg-[hsl(var(--cream-dark))] ink-outline-2 rounded-full flex items-center justify-center overflow-visible">
+                      {!isRemoved && (
+                        <button
+                          onClick={() => tapFace(i)}
+                          className={`w-[110%] h-[110%] btn-press ${scatter ? "animate-scatter" : ""} ${showAngry ? "animate-angry-erupt" : ""}`}
+                          style={scatter ? ({ ["--tx" as any]: tx, ["--ty" as any]: ty, ["--tr" as any]: tr } as React.CSSProperties) : undefined}
+                        >
+                          <SkinFace src={showAngry ? angrySkin.dataUrl : normalSkin.dataUrl} className="w-full h-full" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {revealed && (
+              <div className="absolute inset-0 flex items-start justify-center pointer-events-none pt-2">
+                <div className="bg-[hsl(var(--yellow))] ink-outline rounded-xl px-5 py-2 font-black text-xl text-[hsl(var(--ink))] text-shadow-hard animate-pop-in" style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}>
+                  Angry Uncle Appears!
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="px-3 pb-4">
-          <button
-            onClick={() => setScreen("title")}
-            className="w-full py-2 ink-outline rounded-full bg-[hsl(var(--ink))] text-white font-black btn-press"
-            style={{ boxShadow: "0 4px 0 hsl(var(--wood-dark))" }}
-          >
-            TITLE
-          </button>
-        </div>
+        {showEndButtons ? (
+          <div className="px-4 pb-4 w-full max-w-md mx-auto flex flex-col gap-2 animate-fade-up">
+            <div className="text-center text-[hsl(var(--cream))] font-black">Scolded: {scolded}</div>
+            <WoodButton variant="yellow" onClick={startGame}>REPLAY</WoodButton>
+            <div className="flex gap-2">
+              <div className="flex-1"><WoodButton onClick={() => setScreen("gallery")}>REVIEW</WoodButton></div>
+              <div className="flex-1"><WoodButton onClick={() => setScreen("title")}>TITLE</WoodButton></div>
+            </div>
+          </div>
+        ) : (
+          <div className="px-3 pb-4">
+            <button
+              onClick={() => setScreen("title")}
+              className="w-full py-2 ink-outline rounded-full bg-[hsl(var(--ink))] text-white font-black btn-press"
+              style={{ boxShadow: "0 4px 0 hsl(var(--wood-dark))" }}
+            >
+              TITLE
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
-  // ---------- RESULT ----------
-  if (screen === "result") {
-    return (
-      <div className="wood-bg min-h-screen flex flex-col items-center justify-center p-5 gap-5">
-        <div className="bg-[hsl(var(--yellow))] ink-outline rounded-xl px-6 py-3 font-black text-2xl text-[hsl(var(--ink))] text-shadow-hard animate-pop-in" style={{ boxShadow: "0 5px 0 hsl(var(--ink))" }}>
-          Angry Uncle Appears!
-        </div>
-        <div className="w-72 h-72 ink-outline rounded-2xl bg-[hsl(var(--cream))] flex items-center justify-center animate-shake overflow-hidden" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
-          <SkinFace src={angrySkin.dataUrl} className="w-[95%] h-[95%] animate-angry-erupt" />
-        </div>
-        <div className="text-[hsl(var(--cream))] font-black text-lg">Scolded: {scolded}</div>
-        <div className="w-full max-w-xs flex flex-col gap-3">
-          <WoodButton variant="yellow" onClick={startGame}>REPLAY</WoodButton>
-          <WoodButton onClick={() => setScreen("gallery")}>REVIEW</WoodButton>
-          <WoodButton onClick={() => setScreen("title")}>TITLE</WoodButton>
-        </div>
-      </div>
-    );
-  }
-
-  // ---------- GALLERY ----------
   const unlocked = Math.min(CHARACTERS.length, Math.floor(scolded / 3));
   return (
     <div className="wood-bg min-h-screen flex flex-col">
