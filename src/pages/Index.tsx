@@ -4,13 +4,7 @@ import { OjisanFace } from "@/components/OjisanFace";
 import { FaceBorder } from "@/components/FaceBorder";
 import { WoodButton } from "@/components/WoodButton";
 import { SkinFace } from "@/components/SkinFace";
-import {
-  findSkin,
-  getAngryLibrary,
-  getNormalLibrary,
-  getSelectedAngryId,
-  getSelectedNormalId,
-} from "@/lib/skins";
+import { findPack, getSelectedPackId } from "@/lib/skins";
 
 type Screen = "title" | "game" | "gallery";
 type Mode = "easy" | "hard";
