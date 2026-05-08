@@ -11,7 +11,12 @@ import {
   setSkinMode,
 } from "@/lib/skins";
 
-const BONK_SOUNDS = ["/sounds/bonk1.wav", "/sounds/bonk2.wav", "/sounds/bonk3.wav"];
+// Add your own .wav/.mp3 files to /public/sounds/ and list them here
+const BONK_SOUNDS = [
+  "/sounds/bonk1.wav",
+  "/sounds/bonk2.wav",
+  "/sounds/bonk3.wav",
+];
 
 const playBonk = (() => {
   let current: HTMLAudioElement | null = null;
