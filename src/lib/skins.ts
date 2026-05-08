@@ -18,7 +18,7 @@ const KEYS = {
   adminAuth: "angryOjisan_adminAuth",
 };
 
-export const ADMIN_PASSWORD = "ק";
+export const ADMIN_PASSWORD = "123456";
 
 export const BUILTIN_PACK: SkinPack = {
   id: "builtin-default",
