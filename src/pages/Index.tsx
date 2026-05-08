@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { SkinFace } from "@/components/SkinFace";
 import { WoodButton } from "@/components/WoodButton";
@@ -10,6 +10,25 @@ import {
   getSelectedPack,
   setSkinMode,
 } from "@/lib/skins";
+
+const BONK_SOUNDS = ["/sounds/bonk1.wav", "/sounds/bonk2.wav", "/sounds/bonk3.wav"];
+
+const playBonk = (() => {
+  let current: HTMLAudioElement | null = null;
+  return () => {
+    if (current) {
+      current.pause();
+      current.currentTime = 0;
+    }
+    const src = BONK_SOUNDS[Math.floor(Math.random() * BONK_SOUNDS.length)];
+    const audio = new Audio(src);
+    current = audio;
+    audio.play().catch(() => {});
+    audio.addEventListener("ended", () => {
+      if (current === audio) current = null;
+    });
+  };
+})();
 
 type Screen = "title" | "game" | "gallery";
 
@@ -85,6 +104,7 @@ const Index = () => {
       setTimeout(() => setShaking(false), 600);
       setTimeout(() => setShowEndButtons(true), 1000);
     } else {
+      playBonk();
       setFaceAnimations((prev) => ({ ...prev, [i]: "flip-spin-fly" }));
       setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
       setTimeout(() => {
