@@ -8,6 +8,14 @@ export type Skin = {
   builtin?: boolean;
 };
 
+export type SkinPack = {
+  id: string;
+  name: string;
+  normalDataUrl: string;
+  angryDataUrl: string;
+  builtin?: boolean;
+};
+
 const KEYS = {
   libNormal: "angryOjisan_skinLibrary_normal",
   libAngry: "angryOjisan_skinLibrary_angry",
@@ -16,6 +24,9 @@ const KEYS = {
   selNormal: "angryOjisan_selectedNormalSkin",
   selAngry: "angryOjisan_selectedAngrySkin",
   adminAuth: "angryOjisan_adminAuth",
+  packs: "angryOjisan_skinPacks",
+  defPack: "angryOjisan_defaultSkinPack",
+  selPack: "angryOjisan_selectedSkinPack",
 };
 
 export const ADMIN_PASSWORD = "ojisan2026";
