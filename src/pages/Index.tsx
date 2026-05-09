@@ -115,7 +115,7 @@ const Index = () => {
   // ---------- TITLE ----------
   if (screen === "title") {
     return (
-      <div className="wood-bg min-h-screen flex flex-col items-center overflow-hidden">
+      <div className="wood-bg min-h-screen flex flex-col items-center">
         <div className="flex-1 w-full max-w-md mx-auto px-5 py-6 flex flex-col items-center justify-center gap-4">
           {/* Carton package */}
           <button onClick={startGame} className="w-full ink-outline rounded-xl bg-[hsl(var(--cream))] overflow-hidden btn-press text-left" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
