@@ -210,12 +210,14 @@ const Admin = () => {
   };
 
   const handleDelete = (pack: SkinPack) => {
-    if (pack.builtin) return;
     if (!canDelete) {
       alert("At least one skin pack must remain.");
       return;
     }
-    if (!confirm(`Delete "${pack.name}"?`)) return;
+    const msg = pack.builtin
+      ? `Delete the DEFAULT pack "${pack.name}"?\nA random remaining pack will become the new default.`
+      : `Delete "${pack.name}"?`;
+    if (!confirm(msg)) return;
     removeSkinPack(pack.id);
     refresh();
   };
