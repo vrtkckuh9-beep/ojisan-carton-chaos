@@ -56,7 +56,7 @@
     @apply text-foreground;
     font-family: 'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', 'Noto Sans JP', system-ui, sans-serif;
     background: hsl(var(--wood-dark));
-    overflow: hidden;
+    overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
