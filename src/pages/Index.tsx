@@ -10,7 +10,7 @@ import {
   getSelectedPack,
   setSkinMode,
 } from "@/lib/skins";
-import { playRandomSound } from "@/lib/audio";
+import { playRandomSound, playFallbackPop, playFallbackAngry } from "@/lib/audio";
 
 type Screen = "title" | "game" | "gallery";
 
@@ -79,7 +79,7 @@ const Index = () => {
     if (removed.has(i) || revealed || faceAnimations[i]) return;
     if (i === angryIndex) {
       const angryPack = getAngryPack();
-      playRandomSound(angryPack.angrySounds || []);
+      playRandomSound(angryPack.angrySounds, playFallbackAngry);
       setRevealed(true);
       setShaking(true);
       const s = scolded + 1;
@@ -89,7 +89,7 @@ const Index = () => {
       setTimeout(() => setShowEndButtons(true), 1000);
     } else {
       const facePack = getFacePack(i);
-      playRandomSound(facePack.normalSounds || []);
+      playRandomSound(facePack.normalSounds, playFallbackPop);
       setFaceAnimations((prev) => ({ ...prev, [i]: "flip-spin-fly" }));
       setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
       setTimeout(() => {
