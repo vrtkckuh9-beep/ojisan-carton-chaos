@@ -210,12 +210,14 @@ const Admin = () => {
   };
 
   const handleDelete = (pack: SkinPack) => {
-    if (pack.builtin) return;
     if (!canDelete) {
       alert("At least one skin pack must remain.");
       return;
     }
-    if (!confirm(`Delete "${pack.name}"?`)) return;
+    const msg = pack.builtin
+      ? `Delete the DEFAULT pack "${pack.name}"?\nA random remaining pack will become the new default.`
+      : `Delete "${pack.name}"?`;
+    if (!confirm(msg)) return;
     removeSkinPack(pack.id);
     refresh();
   };
@@ -320,16 +322,15 @@ const Admin = () => {
                       >
                         {isExpanded ? "CLOSE" : "SOUNDS"}
                       </button>
-                      {!pack.builtin && (
-                        <button
-                          onClick={() => handleDelete(pack)}
-                          className={`text-[10px] font-black py-1 px-2 rounded ink-outline-2 ${
-                            canDelete ? "bg-[hsl(var(--angry))] text-white" : "bg-[hsl(var(--cream-dark))] text-[hsl(var(--ink))] opacity-50"
-                          }`}
-                        >
-                          X
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleDelete(pack)}
+                        disabled={!canDelete}
+                        className={`text-[10px] font-black py-1 px-2 rounded ink-outline-2 ${
+                          canDelete ? "bg-[hsl(var(--angry))] text-white" : "bg-[hsl(var(--cream-dark))] text-[hsl(var(--ink))] opacity-50"
+                        }`}
+                      >
+                        X
+                      </button>
                     </div>
                   </div>
                   {isExpanded && (
