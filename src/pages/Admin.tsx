@@ -14,26 +14,64 @@ import {
   updateSkinPack,
 } from "@/lib/skins";
 import { WoodButton } from "@/components/WoodButton";
+import { playSound, playFallbackPop, playFallbackAngry } from "@/lib/audio";
+
+const shortLabel = (s: string, i: number) => {
+  if (s.startsWith("data:")) return `🎵 Upload #${i + 1}`;
+  try {
+    const u = new URL(s);
+    return u.pathname.split("/").pop() || u.hostname;
+  } catch {
+    return s;
+  }
+};
 
 const SoundList = ({
   label,
   sounds,
   onAdd,
   onRemove,
+  testFallback,
 }: {
   label: string;
   sounds: string[];
   onAdd: (url: string) => void;
   onRemove: (idx: number) => void;
+  testFallback: () => void;
 }) => {
   const [url, setUrl] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files) return;
+    for (const f of Array.from(files)) {
+      const dataUrl = await fileToDataUrl(f);
+      onAdd(dataUrl);
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs font-black text-[hsl(var(--ink))]">{label}</div>
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-black text-[hsl(var(--ink))]">{label}</div>
+        <button
+          onClick={testFallback}
+          className="text-[10px] font-black px-2 py-1 rounded ink-outline-2 bg-[hsl(var(--cream-dark))] text-[hsl(var(--ink))]"
+        >
+          ▶ Test default
+        </button>
+      </div>
       {sounds.map((s, i) => (
         <div key={i} className="flex items-center gap-1">
+          <button
+            onClick={() => playSound(s)}
+            className="text-[10px] font-black px-2 py-1 rounded ink-outline-2 bg-[hsl(var(--yellow))] text-[hsl(var(--ink))] shrink-0"
+          >
+            ▶
+          </button>
           <div className="flex-1 text-[10px] font-bold text-[hsl(var(--ink))] truncate bg-white ink-outline-2 rounded px-2 py-1">
-            {s}
+            {shortLabel(s, i)}
           </div>
           <button
             onClick={() => onRemove(i)}
@@ -68,6 +106,17 @@ const SoundList = ({
         >
           +
         </button>
+        <label className="text-[10px] font-black px-2 py-1 rounded ink-outline-2 bg-[hsl(var(--accent))] text-white shrink-0 cursor-pointer">
+          📁
+          <input
+            ref={fileRef}
+            type="file"
+            accept="audio/*"
+            multiple
+            hidden
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+        </label>
       </div>
     </div>
   );
@@ -290,12 +339,14 @@ const Admin = () => {
                         sounds={pack.normalSounds || []}
                         onAdd={(url) => addSound(pack, "normalSounds", url)}
                         onRemove={(idx) => removeSound(pack, "normalSounds", idx)}
+                        testFallback={playFallbackPop}
                       />
                       <SoundList
                         label="ANGRY SOUNDS"
                         sounds={pack.angrySounds || []}
                         onAdd={(url) => addSound(pack, "angrySounds", url)}
                         onRemove={(idx) => removeSound(pack, "angrySounds", idx)}
+                        testFallback={playFallbackAngry}
                       />
                     </div>
                   )}
