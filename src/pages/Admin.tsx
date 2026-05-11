@@ -213,7 +213,7 @@ const Admin = () => {
   const handleNormalFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = await fileToDataUrl(file);
+    const url = await processImage(file);
     setNormalPreview(url);
     if (!packName) setPackName(file.name.replace(/\.[^.]+$/, ""));
   };
@@ -221,7 +221,7 @@ const Admin = () => {
   const handleAngryFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = await fileToDataUrl(file);
+    const url = await processImage(file);
     setAngryPreview(url);
   };
 
