@@ -59,6 +59,7 @@ const Index = () => {
   );
   const [cheatToast, setCheatToast] = useState<string | null>(null);
   const [secretTaps, setSecretTaps] = useState<number[]>([]);
+  const [cheatDoomTurn, setCheatDoomTurn] = useState(3);
 
   const selectedPack = getSelectedPack();
 
@@ -92,6 +93,13 @@ const Index = () => {
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
     setTapCount(0);
 
+    // Pick a random odd turn (>=3) for Player 1 to be doomed on, when cheat is on.
+    // Must be within tile count so the game can actually reach it.
+    const maxOdd = num % 2 === 0 ? num - 1 : num - 2;
+    const oddTurns: number[] = [];
+    for (let t = 3; t <= maxOdd; t += 2) oddTurns.push(t);
+    setCheatDoomTurn(oddTurns.length ? oddTurns[Math.floor(Math.random() * oddTurns.length)] : 3);
+
     if (mode === "multi") {
       setBoardPacks(packs);
     } else {
@@ -124,8 +132,14 @@ const Index = () => {
           }
           effectiveAngry = false;
         }
-      } else if (turn === 1) {
-        // Never end the game on the very first tap — reroute angry away.
+      } else if (turn === cheatDoomTurn) {
+        // P1's doomed turn (randomly chosen each game): force angry.
+        if (!effectiveAngry) {
+          setAngryIndex(i);
+          effectiveAngry = true;
+        }
+      } else {
+        // Other P1 turns: protect, reroute angry away.
         if (effectiveAngry) {
           const candidates: number[] = [];
           for (let k = 0; k < num; k++) {
@@ -135,12 +149,6 @@ const Index = () => {
             setAngryIndex(candidates[Math.floor(Math.random() * candidates.length)]);
           }
           effectiveAngry = false;
-        }
-      } else {
-        // Subsequent Player 1 turn: force angry so P1 loses and P2 wins.
-        if (!effectiveAngry) {
-          setAngryIndex(i);
-          effectiveAngry = true;
         }
       }
     }
