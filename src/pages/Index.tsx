@@ -59,6 +59,7 @@ const Index = () => {
   );
   const [cheatToast, setCheatToast] = useState<string | null>(null);
   const [secretTaps, setSecretTaps] = useState<number[]>([]);
+  const [cheatDoomTurn, setCheatDoomTurn] = useState(3);
 
   const selectedPack = getSelectedPack();
 
