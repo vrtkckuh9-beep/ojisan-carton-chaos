@@ -105,21 +105,32 @@ const Index = () => {
     if (removed.has(i) || revealed || faceAnimations[i]) return;
 
     // Cheat: "Second Player Always Wins"
-    // Turn 1 (P1) and even turns (P2) are protected from angry.
-    // Angry only allowed on odd turns >= 3 (P1's subsequent turns).
+    // Local hot-seat alternation: odd taps = Player 1, even taps = Player 2.
+    // Player 2 must NEVER tap angry. Player 1 ALWAYS taps angry (so P2 wins).
     const turn = tapCount + 1;
+    const isPlayer2Turn = turn % 2 === 0;
     let effectiveAngry = i === angryIndex;
-    if (cheatMode && effectiveAngry && (turn === 1 || turn % 2 === 0)) {
-      // Reroute angry to a different remaining tile
-      const candidates: number[] = [];
-      for (let k = 0; k < num; k++) {
-        if (k !== i && !removed.has(k)) candidates.push(k);
+
+    if (cheatMode) {
+      if (isPlayer2Turn) {
+        // Protect Player 2: reroute angry away from this tile.
+        if (effectiveAngry) {
+          const candidates: number[] = [];
+          for (let k = 0; k < num; k++) {
+            if (k !== i && !removed.has(k)) candidates.push(k);
+          }
+          if (candidates.length) {
+            setAngryIndex(candidates[Math.floor(Math.random() * candidates.length)]);
+          }
+          effectiveAngry = false;
+        }
+      } else {
+        // Player 1 turn: force the tapped tile to be angry so P1 loses.
+        if (!effectiveAngry) {
+          setAngryIndex(i);
+          effectiveAngry = true;
+        }
       }
-      if (candidates.length) {
-        const newAngry = candidates[Math.floor(Math.random() * candidates.length)];
-        setAngryIndex(newAngry);
-      }
-      effectiveAngry = false;
     }
 
     setTapCount((c) => c + 1);
