@@ -134,6 +134,45 @@ const Admin = () => {
   const [angryPreview, setAngryPreview] = useState<string | null>(null);
   const [packName, setPackName] = useState("");
   const [expandedPack, setExpandedPack] = useState<string | null>(null);
+  const [removeBg, setRemoveBg] = useState(false);
+  const [bgProcessing, setBgProcessing] = useState(false);
+
+  const REMOVE_BG_API_KEY = "CEviGuK8tXvpMa586idq3arU";
+
+  const stripBg = async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append("image_file", file);
+    form.append("size", "auto");
+    const res = await fetch("https://api.remove.bg/v1.0/removebg", {
+      method: "POST",
+      headers: { "X-Api-Key": REMOVE_BG_API_KEY },
+      body: form,
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`remove.bg failed (${res.status}): ${txt}`);
+    }
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  };
+
+  const processImage = async (file: File): Promise<string> => {
+    if (!removeBg) return await fileToDataUrl(file);
+    setBgProcessing(true);
+    try {
+      return await stripBg(file);
+    } catch (err) {
+      alert(`Remove BG failed: ${(err as Error).message}\nUsing original image.`);
+      return await fileToDataUrl(file);
+    } finally {
+      setBgProcessing(false);
+    }
+  };
 
   if (!authed) {
     return (
