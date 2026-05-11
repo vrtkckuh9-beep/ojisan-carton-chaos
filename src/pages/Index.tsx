@@ -53,8 +53,33 @@ const Index = () => {
   const [shaking, setShaking] = useState(false);
   const [faceAnimations, setFaceAnimations] = useState<Record<number, string>>({});
   const [boardPacks, setBoardPacks] = useState<SkinPack[]>([]);
+  const [tapCount, setTapCount] = useState(0);
+  const [cheatMode, setCheatMode] = useState<boolean>(
+    () => localStorage.getItem("angryOjisan_cheatMode") === "true"
+  );
+  const [cheatToast, setCheatToast] = useState<string | null>(null);
+  const [secretTaps, setSecretTaps] = useState<number[]>([]);
 
   const selectedPack = getSelectedPack();
+
+  const handleSecretTap = () => {
+    const now = Date.now();
+    const recent = [...secretTaps, now].filter((t) => now - t <= 1500);
+    if (recent.length >= 3) {
+      const next = !cheatMode;
+      setCheatMode(next);
+      localStorage.setItem("angryOjisan_cheatMode", String(next));
+      setCheatToast(next ? "Cheat Mode Activated" : "Cheat Mode Disabled");
+      playFallbackPop();
+      if ("vibrate" in navigator) {
+        try { (navigator as any).vibrate?.(40); } catch {}
+      }
+      setSecretTaps([]);
+      setTimeout(() => setCheatToast(null), 1600);
+    } else {
+      setSecretTaps(recent);
+    }
+  };
 
   const startGame = useCallback(() => {
     const packs = getSkinPacks();
@@ -65,6 +90,7 @@ const Index = () => {
     setShaking(false);
     setFaceAnimations({});
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+    setTapCount(0);
 
     if (mode === "multi") {
       setBoardPacks(packs);
@@ -77,7 +103,28 @@ const Index = () => {
 
   const tapFace = (i: number) => {
     if (removed.has(i) || revealed || faceAnimations[i]) return;
-    if (i === angryIndex) {
+
+    // Cheat: "Second Player Always Wins"
+    // Turn 1 (P1) and even turns (P2) are protected from angry.
+    // Angry only allowed on odd turns >= 3 (P1's subsequent turns).
+    const turn = tapCount + 1;
+    let effectiveAngry = i === angryIndex;
+    if (cheatMode && effectiveAngry && (turn === 1 || turn % 2 === 0)) {
+      // Reroute angry to a different remaining tile
+      const candidates: number[] = [];
+      for (let k = 0; k < num; k++) {
+        if (k !== i && !removed.has(k)) candidates.push(k);
+      }
+      if (candidates.length) {
+        const newAngry = candidates[Math.floor(Math.random() * candidates.length)];
+        setAngryIndex(newAngry);
+      }
+      effectiveAngry = false;
+    }
+
+    setTapCount((c) => c + 1);
+
+    if (effectiveAngry) {
       const angryPack = getAngryPack();
       playRandomSound(angryPack.angrySounds, playFallbackAngry);
       setRevealed(true);
@@ -115,8 +162,21 @@ const Index = () => {
   // ---------- TITLE ----------
   if (screen === "title") {
     return (
-      <div className="wood-bg min-h-screen flex flex-col items-center">
+      <div className="wood-bg min-h-screen flex flex-col items-center relative">
+        {/* Cheat-mode toast */}
+        {cheatToast && (
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] bg-[hsl(var(--yellow))] ink-outline rounded-lg px-4 py-2 font-black text-sm text-[hsl(var(--ink))] text-shadow-hard animate-pop-in" style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}>
+            {cheatToast}
+          </div>
+        )}
         <div className="flex-1 w-full max-w-md mx-auto px-5 py-6 flex flex-col items-center justify-center gap-4">
+          {/* Hidden secret triple-tap zone */}
+          <div
+            onClick={handleSecretTap}
+            aria-hidden="true"
+            className="w-full h-10 -mb-2 cursor-default"
+            style={{ background: "transparent" }}
+          />
           {/* Carton package */}
           <button onClick={startGame} className="w-full ink-outline rounded-xl bg-[hsl(var(--cream))] overflow-hidden btn-press text-left" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
             <div className="h-3 bg-[hsl(var(--cream))]" />
