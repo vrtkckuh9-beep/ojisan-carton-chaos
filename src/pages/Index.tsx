@@ -162,8 +162,21 @@ const Index = () => {
   // ---------- TITLE ----------
   if (screen === "title") {
     return (
-      <div className="wood-bg min-h-screen flex flex-col items-center">
+      <div className="wood-bg min-h-screen flex flex-col items-center relative">
+        {/* Cheat-mode toast */}
+        {cheatToast && (
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] bg-[hsl(var(--yellow))] ink-outline rounded-lg px-4 py-2 font-black text-sm text-[hsl(var(--ink))] text-shadow-hard animate-pop-in" style={{ boxShadow: "0 4px 0 hsl(var(--ink))" }}>
+            {cheatToast}
+          </div>
+        )}
         <div className="flex-1 w-full max-w-md mx-auto px-5 py-6 flex flex-col items-center justify-center gap-4">
+          {/* Hidden secret triple-tap zone */}
+          <div
+            onClick={handleSecretTap}
+            aria-hidden="true"
+            className="w-full h-10 -mb-2 cursor-default"
+            style={{ background: "transparent" }}
+          />
           {/* Carton package */}
           <button onClick={startGame} className="w-full ink-outline rounded-xl bg-[hsl(var(--cream))] overflow-hidden btn-press text-left" style={{ boxShadow: "0 6px 0 hsl(var(--ink))" }}>
             <div className="h-3 bg-[hsl(var(--cream))]" />
