@@ -90,6 +90,7 @@ const Index = () => {
     setShaking(false);
     setFaceAnimations({});
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+    setTapCount(0);
 
     if (mode === "multi") {
       setBoardPacks(packs);
@@ -102,7 +103,28 @@ const Index = () => {
 
   const tapFace = (i: number) => {
     if (removed.has(i) || revealed || faceAnimations[i]) return;
-    if (i === angryIndex) {
+
+    // Cheat: "Second Player Always Wins"
+    // Turn 1 (P1) and even turns (P2) are protected from angry.
+    // Angry only allowed on odd turns >= 3 (P1's subsequent turns).
+    const turn = tapCount + 1;
+    let effectiveAngry = i === angryIndex;
+    if (cheatMode && effectiveAngry && (turn === 1 || turn % 2 === 0)) {
+      // Reroute angry to a different remaining tile
+      const candidates: number[] = [];
+      for (let k = 0; k < num; k++) {
+        if (k !== i && !removed.has(k)) candidates.push(k);
+      }
+      if (candidates.length) {
+        const newAngry = candidates[Math.floor(Math.random() * candidates.length)];
+        setAngryIndex(newAngry);
+      }
+      effectiveAngry = false;
+    }
+
+    setTapCount((c) => c + 1);
+
+    if (effectiveAngry) {
       const angryPack = getAngryPack();
       playRandomSound(angryPack.angrySounds, playFallbackAngry);
       setRevealed(true);
