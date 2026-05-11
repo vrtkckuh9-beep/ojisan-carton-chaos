@@ -124,8 +124,20 @@ const Index = () => {
           }
           effectiveAngry = false;
         }
+      } else if (turn === 1) {
+        // Never end the game on the very first tap — reroute angry away.
+        if (effectiveAngry) {
+          const candidates: number[] = [];
+          for (let k = 0; k < num; k++) {
+            if (k !== i && !removed.has(k)) candidates.push(k);
+          }
+          if (candidates.length) {
+            setAngryIndex(candidates[Math.floor(Math.random() * candidates.length)]);
+          }
+          effectiveAngry = false;
+        }
       } else {
-        // Player 1 turn: force the tapped tile to be angry so P1 loses.
+        // Subsequent Player 1 turn: force angry so P1 loses and P2 wins.
         if (!effectiveAngry) {
           setAngryIndex(i);
           effectiveAngry = true;
