@@ -53,8 +53,33 @@ const Index = () => {
   const [shaking, setShaking] = useState(false);
   const [faceAnimations, setFaceAnimations] = useState<Record<number, string>>({});
   const [boardPacks, setBoardPacks] = useState<SkinPack[]>([]);
+  const [tapCount, setTapCount] = useState(0);
+  const [cheatMode, setCheatMode] = useState<boolean>(
+    () => localStorage.getItem("angryOjisan_cheatMode") === "true"
+  );
+  const [cheatToast, setCheatToast] = useState<string | null>(null);
+  const [secretTaps, setSecretTaps] = useState<number[]>([]);
 
   const selectedPack = getSelectedPack();
+
+  const handleSecretTap = () => {
+    const now = Date.now();
+    const recent = [...secretTaps, now].filter((t) => now - t <= 1500);
+    if (recent.length >= 3) {
+      const next = !cheatMode;
+      setCheatMode(next);
+      localStorage.setItem("angryOjisan_cheatMode", String(next));
+      setCheatToast(next ? "Cheat Mode Activated" : "Cheat Mode Disabled");
+      playFallbackPop();
+      if ("vibrate" in navigator) {
+        try { (navigator as any).vibrate?.(40); } catch {}
+      }
+      setSecretTaps([]);
+      setTimeout(() => setCheatToast(null), 1600);
+    } else {
+      setSecretTaps(recent);
+    }
+  };
 
   const startGame = useCallback(() => {
     const packs = getSkinPacks();
