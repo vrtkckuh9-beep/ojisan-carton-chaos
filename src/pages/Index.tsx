@@ -93,6 +93,13 @@ const Index = () => {
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
     setTapCount(0);
 
+    // Pick a random odd turn (>=3) for Player 1 to be doomed on, when cheat is on.
+    // Must be within tile count so the game can actually reach it.
+    const maxOdd = num % 2 === 0 ? num - 1 : num - 2;
+    const oddTurns: number[] = [];
+    for (let t = 3; t <= maxOdd; t += 2) oddTurns.push(t);
+    setCheatDoomTurn(oddTurns.length ? oddTurns[Math.floor(Math.random() * oddTurns.length)] : 3);
+
     if (mode === "multi") {
       setBoardPacks(packs);
     } else {
